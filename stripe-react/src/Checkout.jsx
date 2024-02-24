@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useStripe } from "@stripe/react-stripe-js";
+import { fetchFromApi } from "./helpers.js";
 
 export function Checkout() {
   const stripe = useStripe();
@@ -31,8 +32,21 @@ export function Checkout() {
     });
   }
 
-  function handleClick() {
-    return <></>;
+  async function handleClick() {
+    const body = { line_items: [product] };
+    const response = await fetchFromApi("checkouts", {
+      ...body,
+    });
+
+    const sessionId = response.id;
+
+    const { error } = await stripe.redirectToCheckout({
+      sessionId,
+    });
+
+    if (error) {
+      console.log(error);
+    }
   }
 
   return (
@@ -81,8 +95,11 @@ export function Checkout() {
 }
 
 export function CheckoutSuccess() {
-  return <div>Checkout Successful</div>;
+  const url = window.location.href;
+  const sessionID = new URL(url).searchParams.get("session_id");
+  return <h3>Checkout was a success! {sessionID}</h3>;
 }
+
 export function CheckoutFail() {
   return (
     <>
